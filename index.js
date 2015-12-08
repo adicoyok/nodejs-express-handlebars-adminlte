@@ -6,11 +6,15 @@ var exphbs 			= 	require('express3-handlebars');
 var bodyParser 		= 	require('body-parser');
 var base_path 		= 	 __dirname;
 var dataMahasiswa 	= 	[];
+var dataParsed		= 	[];
+var dataToSend		=	[];
+var dataToEdit		=	[];
+var idToEdit		=	"";
 var mahasiswa 		= 	function (nama, npm) {
 						    this.nama = nama;
 						    this.npm = npm;
 						};
-
+//like a helpers
 app.engine("handlebars", exphbs(
 	{
 		defaultLayout:"main",
@@ -19,44 +23,79 @@ app.engine("handlebars", exphbs(
 
 app.set("view engine","handlebars");
 
+//get posted var
 app.use(bodyParser());
 
 app.use('/static',express.static(__dirname + '/views/layouts'));
+app.use('/getdata',express.static(__dirname + '/tmp'));
 
+//index
 app.get('/', function (req, res) {
-	res.render("index", function(request, response){
-		res.writeHead(200, {'Content-Type': 'text/html'});
-        res.write(response);
-        res.end();
+	res.render("index");
+});
+
+app.get('/ubah/:id', function (req, res) {
+
+	var filteredMahasiswa = [];
+    for (var i = 0; i < dataToSend.length; i++) {
+        if (dataToSend[i].npm.toUpperCase() === req.params.id.toUpperCase()) {
+            filteredMahasiswa.push(dataToSend[i]);
+            idToEdit = i;
+        }
+    }
+
+    filteredMahasiswa = JSON.parse(JSON.stringify(filteredMahasiswa));
+
+	res.render("edit", {
+		nama : filteredMahasiswa != '' ? filteredMahasiswa[0].nama : "",
+		npm : filteredMahasiswa != '' ? filteredMahasiswa[0].npm : "",
+		id : idToEdit
 	});
 });
 
+app.get('/hapus/:id', function (req, res) {
 
-app.post('/', function(request, response){
-	var createMahasiswa = function (response, callback) {
-	    dataMahasiswa.push( new mahasiswa( request.body.nama, request.body.npm ));
-	    
-	    if (dataMahasiswa.length != 0)
-	        callback(null, response);
-	    else {
-	        callback(invalidOperationException());
-	    }
-	};
+	var filteredMahasiswa = [];
+    for (var i = 0; i < dataToSend.length; i++) {
+        if (dataToSend[i].npm.toUpperCase() === req.params.id.toUpperCase()) {
+            idToEdit = i;
+        }
+    }
 
-	// data = JSON.parse(JSON.stringify(dataMahasiswa));
-    console.log(dataMahasiswa);
+    if(idToEdit != ""){
+	    var dataToDelete = dataToSend.indexOf(idToEdit);
+	    dataToDelete.splice(dataToSend, idToEdit);
+    }
 
-    response.redirect('/success');
+    res.redirect('/success');
 });
 
 app.get('/success', function (req, res) {
 	res.render("success", {
-		listDataMhs : dataMahasiswa
+		listDataMhs : dataToSend
 	});
-    console.log(mahasiswa);
+});
+
+//get the posted value
+app.post('/', function(request, response){
+    dataMahasiswa.push( new mahasiswa( request.body.nama, request.body.npm ));
+
+	dataParsed["data"] = JSON.parse(JSON.stringify(dataMahasiswa));
+	dataToSend = dataParsed["data"];
+    // console.log(dataParsed);
+
+    response.redirect('/success');
+});
+
+app.post('/ubah/:id', function(request, response){
+    dataToSend[request.body.id].nama = request.body.nama;
+    dataToSend[request.body.id].npm = request.body.npm;
+
+    response.redirect('/success');
 
 });
 
+//setting connection
 var server = app.listen(3000, function () {
 	var host = server.address().address;
 	var port = server.address().port;
