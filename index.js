@@ -9,7 +9,11 @@ var dataMahasiswa 	= 	[];
 var dataParsed		= 	[];
 var dataToSend		=	[];
 var dataToEdit		=	[];
+var dataNotToDelete	=	[];
 var idToEdit		=	"";
+var idToDelete		=	"";
+var ErrorNama		= 	"";		
+var ErrorNpm		= 	"";		
 var mahasiswa 		= 	function (nama, npm) {
 						    this.nama = nama;
 						    this.npm = npm;
@@ -31,7 +35,9 @@ app.use('/getdata',express.static(__dirname + '/tmp'));
 
 //index
 app.get('/', function (req, res) {
-	res.render("index");
+	res.render("index", {
+		breadcrumbs : "Tambah Data",
+	});
 });
 
 app.get('/ubah/:id', function (req, res) {
@@ -49,6 +55,7 @@ app.get('/ubah/:id', function (req, res) {
 	res.render("edit", {
 		nama : filteredMahasiswa != '' ? filteredMahasiswa[0].nama : "",
 		npm : filteredMahasiswa != '' ? filteredMahasiswa[0].npm : "",
+		breadcrumbs : "Ubah Data"+ filteredMahasiswa[0].nama,
 		id : idToEdit
 	});
 });
@@ -57,14 +64,23 @@ app.get('/hapus/:id', function (req, res) {
 
 	var filteredMahasiswa = [];
     for (var i = 0; i < dataToSend.length; i++) {
-        if (dataToSend[i].npm.toUpperCase() === req.params.id.toUpperCase()) {
-            idToEdit = i;
+        if (dataToSend[i].npm.toUpperCase() != req.params.id.toUpperCase()) {
+    		dataNotToDelete.push( new mahasiswa( dataToSend[i].nama, dataToSend[i].npm ));
+        }else{
+            idToDelete = i;
         }
     }
 
-    if(idToEdit != ""){
-	    var dataToDelete = dataToSend.indexOf(idToEdit);
-	    dataToDelete.splice(dataToSend, idToEdit);
+    if( idToDelete != "" || idToDelete == 0) {
+    	dataToSend = [];
+    	dataMahasiswa = [];
+
+    	for (var i = 0; i < dataNotToDelete.length; i++) {
+    		dataMahasiswa.push( new mahasiswa( dataNotToDelete[i].nama, dataNotToDelete[i].npm ));
+    	}
+
+    	dataToSend = JSON.parse(JSON.stringify(dataMahasiswa));
+    	dataNotToDelete = [];
     }
 
     res.redirect('/success');
@@ -72,19 +88,33 @@ app.get('/hapus/:id', function (req, res) {
 
 app.get('/success', function (req, res) {
 	res.render("success", {
-		listDataMhs : dataToSend
+		listDataMhs : dataToSend,
+		breadcrumbs : "Daftar Data"
 	});
 });
 
 //get the posted value
 app.post('/', function(request, response){
-    dataMahasiswa.push( new mahasiswa( request.body.nama, request.body.npm ));
 
-	dataParsed["data"] = JSON.parse(JSON.stringify(dataMahasiswa));
-	dataToSend = dataParsed["data"];
-    // console.log(dataParsed);
+	if ( request.body.nama !== '' && request.body.npm !== '' ){ //validasi form
+    	dataMahasiswa.push( new mahasiswa( request.body.nama, request.body.npm ));
+		dataToSend = JSON.parse(JSON.stringify(dataMahasiswa));
+    	response.redirect('/success');
+	} else {
+		if ( request.body.nama === ''){ //validasi textbox nama
+			ErrorNama = 'Nama Tidak Boleh Kosong';
+		}
+		if ( request.body.npm === ''){ //validasi textbox npm
+			ErrorNpm = 'Npm Tidak Boleh Kosong';
+		}
 
-    response.redirect('/success');
+		response.render("index", {
+			ErrorNama : ErrorNama,
+			ErrorNpm : ErrorNpm,
+			nama : request.body.nama,
+			npm : request.body.npm
+		});
+	}
 });
 
 app.post('/ubah/:id', function(request, response){

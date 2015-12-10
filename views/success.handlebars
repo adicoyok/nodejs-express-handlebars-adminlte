@@ -1,45 +1,53 @@
-<div class="col-lg-12">
-	<div class="col-lg-12 form-group">
-		<a href="/" class="btn btn-sm btn-info pull-right"><i class="fa fa-plus"></i>Tambah Data</a>
-	</div>
-	<div class="form-group clearfix"></div>
-	<div class="col-lg-12 form-group">	
-		<table id="example" class="display" cellspacing="0" width="100%">
-		    <thead>
-		        <tr>
-		            <th>Nama</th>
-		            <th>NPM</th>
-		            <th>&nbsp;</th>
-		        </tr>
-		    </thead>
-		    <tbody>
-				{{#each listDataMhs}}
-					<tr>
-						<td>
-							{{nama}}
-						</td>
-						<td>
-							{{npm}}
-						</td>
-						<td>
-							<a href="/ubah/{{ npm }}" class="btn btn-sm btn-info"><i class="fa fa-pencil-square-o"></i></a>
-							<a href="/hapus/{{ npm }}" class="btn btn-sm btn-danger" onclick="deleteThis();"><i class="fa fa-trash-o"></i></a>
-						</td>
-					</tr>
-				{{/each}}
-		    </tbody>
-		    <tfoot>
-		        <tr>
-		            <th>Nama</th>
-		            <th>NPM</th>
-		            <th>&nbsp;</th>
-		        </tr>
-		    </tfoot>
-		</table>
-	</div>
+
+<div class="col-lg-12 form-group">
+	<a href="/" class="btn btn-sm btn-info pull-right"><i class="fa fa-plus"></i>Tambah Data</a>
+</div>
+<div class="form-group clearfix"></div>
+<div class="col-lg-12 form-group">	
+	<table id="example" class="display" cellspacing="0" width="100%">
+	    <thead>
+	        <tr>
+	            <th>Nama</th>
+	            <th>NPM</th>
+	            <th>&nbsp;</th>
+	        </tr>
+	    </thead>
+	    <tbody>
+			{{#each listDataMhs}}
+				<tr>
+					<td>
+						{{nama}}
+					</td>
+					<td>
+						{{npm}}
+					</td>
+					<td>
+						<a href="/ubah/{{ npm }}" class="btn btn-sm btn-info"><i class="fa fa-pencil-square-o"></i></a>
+						<a href="/hapus/{{ npm }}" class="btn btn-sm btn-danger hapus"><i class="fa fa-trash-o"></i></a>
+					</td>
+				</tr>
+			{{/each}}
+	    </tbody>
+	    <tfoot>
+	        <tr>
+	            <th>Nama</th>
+	            <th>NPM</th>
+	            <th>&nbsp;</th>
+	        </tr>
+	    </tfoot>
+	</table>
 </div>
 
 <script>
-
 	$('#example').DataTable();
+
+	$(".hapus").click(function (val){
+		var x = confirm("Apakah anda yakin untuk menghapus ?");
+		if ( x ) {
+	  		return true;
+		}
+		else {
+			return false;
+		}
+	});
 </script>
