@@ -8,7 +8,7 @@ These instructions will get you a copy of the project up and running on your loc
 ### Installing
 - Clone the repository
 ```
-git clone https://github.com/selamatpurba04/expressYourself.git expressYourself
+git clone https://github.com/selamatpurba04/simple-crud-expresjs.git yourdir
 ```
 
 - Install dependencies
