@@ -1,134 +1,158 @@
-var express 		= 	require('express');
-var app 			= 	express();
-var fs 				= 	require('fs');
-var hb 				= 	require('handlebars');
-var exphbs 			= 	require('express3-handlebars');
-var bodyParser 		= 	require('body-parser');
-var base_path 		= 	 __dirname;
-var dataMahasiswa 	= 	[];
-var dataParsed		= 	[];
-var dataToSend		=	[];
-var dataToEdit		=	[];
-var dataNotToDelete	=	[];
-var idToEdit		=	"";
-var idToDelete		=	"";
-var ErrorNama		= 	"";		
-var ErrorNpm		= 	"";		
-var mahasiswa 		= 	function (nama, npm) {
-						    this.nama = nama;
-						    this.npm = npm;
-						};
-//like a helpers
-app.engine("handlebars", exphbs(
-	{
-		defaultLayout:"main",
-	}
-));
+const express = require('express')
+const app = express()
+const fs = require('fs')
+const hb = require('handlebars')
+const exphbs = require('express3-handlebars')
+const bodyParser = require('body-parser')
+let dataMahasiswa = []
+let dataToSend = []
 
-app.set("view engine","handlebars");
+//like a helpers
+app.engine("handlebars", exphbs( { defaultLayout:"main", } ))
+app.set("view engine","handlebars")
 
 //get posted var
-app.use(bodyParser());
+app.use(bodyParser())
 
-app.use('/static',express.static(__dirname + '/views/layouts'));
-app.use('/getdata',express.static(__dirname + '/tmp'));
+app.use('/static', express.static(__dirname + '/views/assets'))
 
 //index
 app.get('/', function (req, res) {
-	res.render("index", {
-		breadcrumbs : "Tambah Data",
-	});
-});
+	res.render("list", {
+		listDataMhs : dataToSend,
+		breadcrumbs : "List Data"
+	})
+})
 
 app.get('/ubah/:id', function (req, res) {
-
-	var filteredMahasiswa = [];
+	let idToEdit =	""
+	let filteredMahasiswa = []
     for (var i = 0; i < dataToSend.length; i++) {
         if (dataToSend[i].npm.toUpperCase() === req.params.id.toUpperCase()) {
-            filteredMahasiswa.push(dataToSend[i]);
-            idToEdit = i;
+            filteredMahasiswa.push(dataToSend[i])
+            idToEdit = i
         }
     }
 
-    filteredMahasiswa = JSON.parse(JSON.stringify(filteredMahasiswa));
+    filteredMahasiswa = JSON.parse(JSON.stringify(filteredMahasiswa))
 
 	res.render("edit", {
 		nama : filteredMahasiswa != '' ? filteredMahasiswa[0].nama : "",
 		npm : filteredMahasiswa != '' ? filteredMahasiswa[0].npm : "",
 		breadcrumbs : "Ubah Data"+ filteredMahasiswa[0].nama,
 		id : idToEdit
-	});
-});
+	})
+})
 
-app.get('/hapus/:id', function (req, res) {
+app.get('/hapus/:id', (req, res) => {
+	let idToDelete		=	""
+	let filteredMahasiswa = []
+	let dataNotToDelete = []
 
-	var filteredMahasiswa = [];
     for (var i = 0; i < dataToSend.length; i++) {
         if (dataToSend[i].npm.toUpperCase() != req.params.id.toUpperCase()) {
-    		dataNotToDelete.push( new mahasiswa( dataToSend[i].nama, dataToSend[i].npm ));
+    		dataNotToDelete.push( { nama : dataToSend[i].nama, npm : dataToSend[i].npm })
         }else{
-            idToDelete = i;
+            idToDelete = i
         }
     }
 
     if( idToDelete != "" || idToDelete == 0) {
-    	dataToSend = [];
-    	dataMahasiswa = [];
+    	dataToSend = []
+    	dataMahasiswa = []
 
     	for (var i = 0; i < dataNotToDelete.length; i++) {
-    		dataMahasiswa.push( new mahasiswa( dataNotToDelete[i].nama, dataNotToDelete[i].npm ));
+    		dataMahasiswa.push( { nama : dataNotToDelete[i].nama, npm : dataNotToDelete[i].npm })
     	}
 
-    	dataToSend = JSON.parse(JSON.stringify(dataMahasiswa));
-    	dataNotToDelete = [];
+    	dataToSend = JSON.parse(JSON.stringify(dataMahasiswa))
+    	dataNotToDelete = []
     }
 
-    res.redirect('/success');
+    res.redirect('/')
 });
 
-app.get('/success', function (req, res) {
-	res.render("success", {
-		listDataMhs : dataToSend,
-		breadcrumbs : "Daftar Data"
+app.get('/add', (req, res) => {
+	res.render("add", {
+		breadcrumbs : "Add Data"
 	});
 });
 
 //get the posted value
-app.post('/', function(request, response){
+app.post('/add', (request, response) => {
+	let nama = request.body.nama
+	let npm = request.body.npm
+	let ErrorNama, ErrorNpm = ""		
+	
+	if ( nama.length > 0 && npm.length > 0 ){ //validasi form
+		let ifExist = dataMahasiswa.findIndex( (e) => { return e.npm === npm })
+		
+		if( ifExist > -1 ){
+			ErrorNpm = 'Npm sudah dipakai'
+		}else{
+			dataMahasiswa.push({nama : nama, npm : npm })
+			dataToSend = JSON.parse(JSON.stringify(dataMahasiswa))
+			response.redirect('/')
+		}
 
-	if ( request.body.nama !== '' && request.body.npm !== '' ){ //validasi form
-    	dataMahasiswa.push( new mahasiswa( request.body.nama, request.body.npm ));
-		dataToSend = JSON.parse(JSON.stringify(dataMahasiswa));
-    	response.redirect('/success');
 	} else {
-		if ( request.body.nama === ''){ //validasi textbox nama
-			ErrorNama = 'Nama Tidak Boleh Kosong';
+		if( nama.length == 0 ){ //validasi textbox nama
+			ErrorNama = 'Nama Tidak Boleh Kosong'
 		}
-		if ( request.body.npm === ''){ //validasi textbox npm
-			ErrorNpm = 'Npm Tidak Boleh Kosong';
+		if( npm.length == 0 ){ //validasi textbox npm
+			ErrorNpm = 'Npm Tidak Boleh Kosong'
 		}
-
-		response.render("index", {
-			ErrorNama : ErrorNama,
-			ErrorNpm : ErrorNpm,
-			nama : request.body.nama,
-			npm : request.body.npm
-		});
 	}
-});
 
-app.post('/ubah/:id', function(request, response){
-    dataToSend[request.body.id].nama = request.body.nama;
-    dataToSend[request.body.id].npm = request.body.npm;
+	response.render("add", {
+		ErrorNama : ErrorNama,
+		ErrorNpm : ErrorNpm,
+		nama : nama,
+		npm : npm
+	})
+})
 
-    response.redirect('/success');
+app.post('/ubah/:id', (request, response) => {
+	let id = request.body.id
+	let nama = request.body.nama
+	let npm = request.body.npm
+	let ErrorNama, ErrorNpm = ""	
 
-});
+	if( nama.length > 0 && npm.length > 0 ){ //validasi form
+		
+		let ifExist = dataMahasiswa.findIndex( (e) => { return e.npm === npm })
+		
+		if( ifExist > -1 && ifExist != id ){
+			ErrorNpm = 'Npm sudah dipakai'
+		}else{
+			dataToSend[id].nama = request.body.nama
+			dataToSend[id].npm = request.body.npm
+			response.redirect('/')
+		}
+
+	}else{
+		if ( nama.length == 0 ){ //validasi textbox nama
+			ErrorNama = 'Nama Tidak Boleh Kosong'
+		}
+		if ( npm.length == 0 ){ //validasi textbox npm
+			ErrorNpm = 'Npm Tidak Boleh Kosong'
+		}
+	}
+	
+	response.render("edit", {
+		ErrorNama : ErrorNama,
+		ErrorNpm : ErrorNpm,
+		nama : nama,
+		npm : npm,
+		id : id
+	})
+})
+
 
 //setting connection
-var server = app.listen(3000, function () {
-	var host = server.address().address;
-	var port = server.address().port;
+var server = app.listen(3000, () => {
+	var host = server.address().address
+	var port = server.address().port
 
-	console.log('Example app listening at http://%s:%s', host, port);
-});
+	console.log('Example app listening at http://%s:%s', host, port)
+})

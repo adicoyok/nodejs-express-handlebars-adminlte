@@ -1,6 +1,22 @@
-# nodejs-express-handlebars-adminlte
-template nodejs express handlebars adminLte
+# Simple CRUD NodeJS
+- NodeJS Framework : <a href="http://expressjs.com/">Express JS</a>
+- Template : <a href="http://handlebarsjs.com/">HandlebarsJS</a>
 
-install your nodejs
-git pull this
-enjoy the template
+## Getting Started
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+
+### Installing
+- Clone the repository
+```
+git clone https://github.com/selamatpurba04/expressYourself.git expressYourself
+```
+
+- Install dependencies
+```
+npm install
+```
+
+- run
+```
+node index.js
+```
